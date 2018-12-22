@@ -1,0 +1,23 @@
+The overlays should use a toggle to turn on and off and should appear at the top of the configuration window.
+
+Overlay ideas:
+Spell timers
+Dps current and peak based on a ten second sample
+DPS on specific name
+Map with npc search
+Active target info based on Inc <~~mob name~~>
+
+Overlays are independent and can click thru all areas except handle and search field in the case of the map.
+
+General configuration ideas.
+
+Map, pulls in the associated map when zoning. Double click handle to show pop up to select a map? The player is shown when loc detected. The player pip starts shrinking after a moment, resulting in a recent trail. Map may need coordinate adjusting controls and zoom controls... Should save that in a maps database. A pointer would be good too based on a dropped pin or searched for npc.
+
+DPS current and peak would be player, but theoretically could add a targeted version. I would need to alter the DPS buffer. This would leverage react's props passing.
+
+Need to add an auto detect target feature for the dps to help detect weapon procs. 
+
+Current strategy :
+
+Figure out parsing the log for dps.
+Then create the basic view and components. Ideally, I would like players to have the option to pick dps labels and colors and the handle text. Maybe have an option for random tint of the background. The content portion of the view should be click thru capable. 
