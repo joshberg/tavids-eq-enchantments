@@ -4,7 +4,11 @@ import ToggleButton from 'react-toggle-button';
 const Log = require('./scripts/LogListener');
 const DB = require('./scripts/DB');
 const { dialog } = require('electron').remote;
+const ipcRenderer = require('electron').ipcRenderer;
 const Config = require('./scripts/Config');
+
+let regexConfigDps = /configDps/;
+let lastUpdate;
 
 
 
@@ -29,16 +33,29 @@ export default class App extends React.Component {
       currentZone: '',
       overlayDpsActive: false,
       overlayMapActive: false,
-      overlaySpellTimersActive: false
+      overlaySpellTimersActive: false,
+      configDpsWidth: 300,
+      configDpsHeight: 230,
+      configDpsX: 50,
+      configDpsY: 50,
+      configDpsBG: "#FFFFFF",
+      configDpsBGshow: true,
+      configDpsOpacity: 100,
+      configDpsTextColor: "#000000",
+      configDpsTextSize: 12
     };
 
     Config.LoadConfig().then((data) => {
+      lastUpdate = Date.now();
       this.setState(data);
       this.setState({
         bufferListenerInterval: {},
         dps: { peak: 0, average: 0, current: 0 },
         dpsInterval: {},
         locInterval: {},
+        overlayDpsActive: false,
+        overlayMapActive: false,
+        overlaySpellTimersActive: false,
       })
     }).catch((err) => {
       console.log(err);
@@ -64,6 +81,9 @@ export default class App extends React.Component {
     const name = target.name;
     this.setState({
       [name]: value
+    }, () => {
+      if (lastUpdate < Date.now() - 20000)
+        Config.SaveConfig(this.state);
     });
   }
 
@@ -97,6 +117,21 @@ export default class App extends React.Component {
     this.state.dpsInterval = setInterval(() => {
       this.setState({
         dps: Log.getPlayerDps()
+      }, () => {
+        let configDps = {
+          Width: parseInt(this.state.configDpsWidth),
+          Height: parseInt(this.state.configDpsHeight),
+          X: parseInt(this.state.configDpsX),
+          Y: parseInt(this.state.configDpsY),
+          BGColor: this.state.configDpsBG,
+          BGShow: this.state.configDpsBGshow,
+          TextSize: parseInt(this.state.configDpsTextSize),
+          Opacity: parseInt(this.state.configDpsOpacity),
+          Current: parseFloat(this.state.dps.current),
+          Average: parseFloat(this.state.dps.average),
+          Peak: parseFloat(this.state.dps.peak)
+        }
+        ipcRenderer.send('overlayDpsUpdate', configDps);
       });
     }, 300);
 
@@ -116,6 +151,13 @@ export default class App extends React.Component {
     Config.SaveConfig(this.state);
   }
 
+  convertAlpha(value) {
+    let hexString = value.toString(16);
+    if (hexString.length % 2) {
+      hexString = '0' + hexString;
+    }
+    return hexString;
+  }
 
   render() {
     return (<div className="wrapper">
@@ -160,11 +202,25 @@ export default class App extends React.Component {
                   name="overlayDpsToggle"
                   value={this.state.overlayDpsActive || false}
                   onToggle={(value) => {
-                    if (this.CheckBasicConfig())
+                    if (this.CheckBasicConfig()) {
                       this.setState({
                         overlayDpsActive: !value,
-                      })
-                    else
+                      });
+                      let configDps = {
+                        Width: parseInt(this.state.configDpsWidth),
+                        Height: parseInt(this.state.configDpsHeight),
+                        X: parseInt(this.state.configDpsX),
+                        Y: parseInt(this.state.configDpsY),
+                        BGColor: this.state.configDpsBG,
+                        BGShow: this.state.configDpsBGshow,
+                        Opacity: parseInt(this.state.configDpsOpacity),
+                        TextSize: parseInt(this.state.configDpsTextSize),
+                        Current: 0,
+                        Average: 0,
+                        Peak: 0
+                      }
+                      ipcRenderer.send('overlayToggleDPS', configDps);
+                    } else
                       alert('Cannot activate overlay. Basic config incomplete!');
                   }} />
               </div>
@@ -230,23 +286,96 @@ export default class App extends React.Component {
               <div className="pure-u-1-1">
                 <h2 className="centered">Advanced Config</h2>
               </div>
+              <div className="pure-u-1-2">
+                <h3 className="centered">DPS Overlay Settings</h3>
+                <div className="pure-u-1-1">
+                  <div className="bordered">
+                    <form className="pure-form pure-form-aligned m1">
+                      <div className="pure-control-group-fill">
+                        <label htmlFor="configDpsWidth">Width:</label>
+                        <input name="configDpsWidth" type="number" value={this.state.configDpsWidth} onChange={this.handleInputChange} />
+                      </div>
+                      <div className="pure-control-group-fill">
+                        <label htmlFor="configDpsHeight">Height:</label>
+                        <input name="configDpsHeight" type="number" value={this.state.configDpsHeight} onChange={this.handleInputChange} />
+                      </div>
+                      <div className="pure-control-group-fill">
+                        <label htmlFor="configDpsX">X:</label>
+                        <input name="configDpsX" type="number" value={this.state.configDpsX} onChange={this.handleInputChange} />
+                      </div>
+                      <div className="pure-control-group-fill">
+                        <label htmlFor="configDpsY">Y:</label>
+                        <input name="configDpsY" type="number" value={this.state.configDpsY} onChange={this.handleInputChange} />
+                      </div>
+                      <div className="pure-control-group-fill">
+                        <label htmlFor="configDpsBG">BGColor:</label>
+                        <input name="configDpsBG" type="color" value={this.state.configDpsBG} onChange={this.handleInputChange} />
+                      </div>
+                      <div className="pure-control-group-fill">
+                        <label htmlFor="configDpsBGshow">Show BG:</label>
+                        <ToggleButton
+                          name="configDpsBGshow"
+                          value={this.state.configDpsBGshow || false}
+                          onToggle={(value) => {
+                            this.setState({
+                              configDpsBGshow: !value,
+                            })
+                          }} />
+                      </div>
+                      <div className="pure-control-group-fill">
+                        <label htmlFor="configDpsOpacity">Opacity:</label>
+                        <input name="configDpsOpacity" type="range" min={10} max={100} value={this.state.configDpsOpacity} onChange={this.handleInputChange} />
+                      </div>
+                      <div className="pure-control-group-fill">
+                        <label htmlFor="configDpsTextSize">TextSize:</label>
+                        <input name="configDpsTextSize" type="number" value={this.state.configDpsTextSize} onChange={this.handleInputChange} />
+                      </div>
+                      <div className="pure-control-group-fill">
+                        <label htmlFor="configDpsTextColor">TextColor:</label>
+                        <input name="configDpsTextColor" type="color" value={this.state.configDpsTextColor} onChange={this.handleInputChange} />
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+              <div className="pure-u-1-2">
+                <h3 className="centered">DPS Overlay Preview</h3>
+                <div className="bordered" style={{ minHeight: 20 + "em" }}>
+                  <div className="bordered" style={
+                    {
+                      height: (this.state.configDpsHeight) + "px",
+                      width: (this.state.configDpsWidth) + "px",
+                      position: "relative",
+                      left: (this.state.configDpsX / 50) + "em",
+                      top: (this.state.configDpsY / 50) + "em",
+                      fontSize: (this.state.configDpsTextSize) + "pt",
+                      backgroundColor: (this.state.configDpsBGshow ? this.state.configDpsBG : "#0000"),
+                      opacity: (this.state.configDpsOpacity / 100)
+                    }}><span style={{ position: "absolute", fontSize: 0.65 + "em", top: -1 + "px", left: 0 + "px" }}>&#8865;</span>
+                    <div style={{ padding: 0.6 + "em" }}>
+                      DPS: <span style={{ float: "right" }}>10.34</span><br />
+                      Avg: <span style={{ float: "right" }}>20.34</span><br />
+                      Peak:<span style={{ float: "right" }}>142</span></div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div name="debuggingWindow" className={this.state.showDebugging ? "pure-u-1-1" : "hidden"}>
             <div className="p1">
               <div className="pure-u-1-3">
                 <h2 className="centered">Listener Output (LastLoc)</h2>
-                <div name="bufferOutputLastLoc" className="bordered" style={{minHeight: 3 + "em"}}>
+                <div name="bufferOutputLastLoc" className="bordered" style={{ minHeight: 3 + "em" }}>
                   <div className="pure-u-1-2"><b>X: </b>{this.state.lastLoc.x}</div>
                   <div className="pure-u-1-2"><b>Y: </b>{this.state.lastLoc.y}</div>
                   <div className="pure-u-1-1"><b>Zone: </b>{this.state.currentZone}</div>
                 </div>
               </div>
               <div className="pure-u-2-3"><h2 className="centered">Listener Output (DPS)</h2>
-                <div name="bufferDpsOutput" className="bordered" style={{minHeight: 4.8 + "em"}} >
+                <div name="bufferDpsOutput" className="bordered" style={{ minHeight: 4.8 + "em" }} >
                   <div className="pure-u-1-3"><b>DPS: </b>{this.state.dps.current}</div>
                   <div className="pure-u-1-3"><b>Avg Dmg: </b>{this.state.dps.average}</div>
-                  <div className="pure-u-1-3"><b>Peak DPS: </b>{this.state.dps.peakDPS}</div>
+                  <div className="pure-u-1-3"><b>Peak DPS: </b>{this.state.dps.peak}</div>
                 </div>
               </div>
               <div className="pure-u-1-1"><h2 className="centered">Listener Output (Main Buffer)</h2>
@@ -262,4 +391,6 @@ export default class App extends React.Component {
       </div>
     </div>);
   }
+
+
 }

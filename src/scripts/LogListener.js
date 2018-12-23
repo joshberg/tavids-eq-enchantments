@@ -102,7 +102,7 @@ var getPlayerDps = () => {
         dps = totalDmg / 3; //Divide by number of seconds
         peakDPS = (peakDPS < dps ? dps : peakDPS);
         avg = totalAvg / totalCount;
-        dpsObj.peakDPS = Math.round(peakDPS*10)/10;
+        dpsObj.peak = Math.round(peakDPS*10)/10;
         dpsObj.current = Math.round(dps*10)/10;
         dpsObj.average = Math.round(avg*10)/10;
         return (dpsObj);

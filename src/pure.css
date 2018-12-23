@@ -1735,3 +1735,12 @@ striping:
     height: 22px;
     margin-right: 5px;
 }
+
+/* Transparency click through */
+
+.click-on {
+    pointer-events: all
+}
+.click-through{
+    pointer-events: none
+}

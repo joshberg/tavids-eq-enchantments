@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 var SaveConfig = (state) => {
-    fs.writeFile("../../config", JSON.stringify(state), (err) => {
+    fs.writeFile(__dirname + "/../../config", JSON.stringify(state), (err) => {
         if (err)
             alert("Configuration was unable to save!\n" + err);
     });
@@ -10,8 +10,8 @@ var SaveConfig = (state) => {
 var LoadConfig = () => {
     let state;
     return new Promise((resolve, reject) => {
-        fs.exists("../../config", (err) => {
-            fs.readFile("../../config", {
+        fs.exists(__dirname + "/../../config", (err) => {
+            fs.readFile(__dirname + "/../../config", {
                     encoding: "utf-8"
                 },
                 (err, data) => {

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes">
+  <link rel="stylesheet" type="text/css" href="../pure.css"/>
+</head>
+<body style="overflow: hidden; pointer-events: none; margin: 0;-webkit-app-region: drag" >
+  <div id="Dps" class="click-through"></div>
+</body>
+
+<script type="text/jsx">
+import React from 'react';
+import ReactDOM from 'react-dom';
+import {AppContainer} from 'react-hot-loader';
+
+const render = () => {
+  const DPS = require('../components/DPS.jsx').default;
+  ReactDOM.render(<AppContainer><DPS /></AppContainer>, document.getElementById('Dps'));
+}
+
+render();
+if (module.hot) {
+  module.hot.accept(render);
+}
+</script>
+<script defer>
+const TransparencyMouseFix = require('electron-transparency-mouse-fix');
+const fix = new TransparencyMouseFix({
+    log: false,
+    fixPointerEvents: 'auto'
+});
+</script>
+</html>

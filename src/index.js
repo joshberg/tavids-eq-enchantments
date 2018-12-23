@@ -1,20 +1,14 @@
-import { app, BrowserWindow } from 'electron';
-import installExtension, { REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
-import { enableLiveReload } from 'electron-compile';
-// const {spawn} = require('child_process');
-// const dbServer = spawn('node', ['.\\src\\database.js'], {windowsHide:true, detached:false});
-
-// dbServer.stdout.on('data', (data)=>{
-//   console.log(data.toString());
-// });
-
-// dbServer.stderr.on('data', (data)=>{
-//   console.log(data.toString());
-// });
-
-// dbServer.on('exit', (code)=>{
-//   console.log(`DBServer exited with code ${code}`);
-// });
+import {
+  app,
+  BrowserWindow,
+  ipcMain
+} from 'electron';
+import installExtension, {
+  REACT_DEVELOPER_TOOLS
+} from 'electron-devtools-installer';
+import {
+  enableLiveReload
+} from 'electron-compile';
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -22,7 +16,9 @@ let mainWindow;
 
 const isDevMode = process.execPath.match(/[\\/]electron/);
 
-if (isDevMode) enableLiveReload({ strategy: 'react-hmr' });
+if (isDevMode) enableLiveReload({
+  strategy: 'react-hmr'
+});
 
 const createWindow = async () => {
   // Create the browser window.
@@ -37,10 +33,10 @@ const createWindow = async () => {
   mainWindow.loadURL(`file://${__dirname}/index.html`);
 
   // Open the DevTools.
-  if (isDevMode) {
-    await installExtension(REACT_DEVELOPER_TOOLS);
-    mainWindow.webContents.openDevTools();
-  }
+  // if (isDevMode) {
+  //   await installExtension(REACT_DEVELOPER_TOOLS);
+  //   mainWindow.webContents.openDevTools();
+  // }
 
   // Emitted when the window is closed.
   mainWindow.on('closed', () => {
@@ -54,7 +50,47 @@ const createWindow = async () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow);
+let windowDps;
+let windowMap;
+let windowSpellTimers;
+let isWindowDpsOn = false;
+let isWindowMapOn = false;
+let isWindowSpellTimersOn = false;
+
+app.on('ready', function () {
+  createWindow();
+
+  ipcMain.on('overlayToggleDPS', function (event, dpsConfig) {
+    if (!isWindowDpsOn) {
+      windowDps = new BrowserWindow({
+        width: dpsConfig.Width,
+        height: dpsConfig.Height,
+        show: false,
+        x: dpsConfig.X,
+        y: dpsConfig.Y,
+        movable: true,
+        alwaysOnTop: true,
+        transparent: true,
+        parent: mainWindow,
+        frame: false,
+        maximizable: false
+      })
+      windowDps.loadURL(`file://${__dirname}/views/dps.html`);
+      windowDps.once("ready-to-show", () => {
+        windowDps.show();
+        windowDps.send("dpsProps", dpsConfig);
+      });
+      isWindowDpsOn = true;
+    } else {
+      windowDps.hide();
+      isWindowDpsOn = false;
+    }
+  });
+  ipcMain.on('overlayDpsUpdate', (props,data) => {
+    if (isWindowDpsOn === true)
+      windowDps.send("dpsProps", data);
+  });
+});
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
