@@ -5,7 +5,7 @@
   <link rel="stylesheet" type="text/css" href="../pure.css"/>
 </head>
 <body class="click-through" style="overflow: hidden; margin: 0;" >
-  <div id="Dps" class="click-through"></div>
+  <div id="app" class="click-through"></div>
 </body>
 
 <script type="text/jsx">
@@ -14,8 +14,8 @@ import ReactDOM from 'react-dom';
 import {AppContainer} from 'react-hot-loader';
 
 const render = () => {
-  const DPS = require('../components/DPS.jsx').default;
-  ReactDOM.render(<AppContainer><DPS /></AppContainer>, document.getElementById('Dps'));
+  const MobInfo = require('../components/MobInfo.jsx').default;
+  ReactDOM.render(<AppContainer><MobInfo /></AppContainer>, document.getElementById('app'));
 }
 
 render();

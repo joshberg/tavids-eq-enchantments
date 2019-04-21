@@ -24,7 +24,7 @@ const createWindow = async () => {
   // Create the browser window.
   mainWindow = new BrowserWindow({
     width: 900,
-    height: 900,
+    height: 800,
     minWidth: 200,
     minHeight: 100
   });
@@ -53,9 +53,11 @@ const createWindow = async () => {
 let windowDps;
 let windowMap;
 let windowSpellTimers;
+let windowMobInfo;
 let isWindowDpsOn = false;
 let isWindowMapOn = false;
 let isWindowSpellTimersOn = false;
+let isWindowMobInfoOn = false;
 
 app.on('ready', function () {
   createWindow();
@@ -71,9 +73,10 @@ app.on('ready', function () {
         movable: true,
         alwaysOnTop: true,
         transparent: true,
-        parent: mainWindow,
         frame: false,
-        maximizable: false
+        maximizable: false,
+        enableRemoteModule: true,
+        resizable: false
       })
       windowDps.loadURL(`file://${__dirname}/views/dps.html`);
       windowDps.once("ready-to-show", () => {
@@ -86,9 +89,77 @@ app.on('ready', function () {
       isWindowDpsOn = false;
     }
   });
-  ipcMain.on('overlayDpsUpdate', (props,data) => {
+  ipcMain.on('overlayDpsUpdate', (event, data) => {
     if (isWindowDpsOn === true)
       windowDps.send("dpsProps", data);
+  });
+
+  ipcMain.on('overlayMobInfoToggle', function (event, mobInfo) {
+    if (!isWindowMobInfoOn) {
+      windowMobInfo = new BrowserWindow({
+        width: mobInfo.Width,
+        height: mobInfo.Height,
+        show: false,
+        x: mobInfo.X,
+        y: mobInfo.Y,
+        movable: true,
+        alwaysOnTop: true,
+        transparent: true,
+        frame: false,
+        maximizable: false,
+        enableRemoteModule: true,
+        resizable: false
+      })
+      windowMobInfo.loadURL(`file://${__dirname}/views/mobInfo.html`);
+      windowMobInfo.once("ready-to-show", () => {
+        windowMobInfo.show();
+        windowMobInfo.send("mobInfoProps", mobInfo);
+      });
+      isWindowMobInfoOn = true;
+    } else {
+      windowMobInfo.hide();
+      isWindowMobInfoOn = false;
+    }
+  });
+  ipcMain.on('overlayMobInfoUpdate', (event, data) => {
+    if (isWindowMobInfoOn === true)
+      windowMobInfo.send("mobInfoProps", data);
+  });
+
+  ipcMain.on('overlayMapToggle', function (event, map) {
+    if (!isWindowMapOn) {
+      windowMap = new BrowserWindow({
+        width: map.Width,
+        height: map.Height,
+        show: false,
+        x: map.X,
+        y: map.Y,
+        movable: true,
+        alwaysOnTop: true,
+        transparent: true,
+        frame: false,
+        maximizable: false,
+        enableRemoteModule: true,
+        resizable: false
+      })
+      windowMap.loadURL(`file://${__dirname}/views/map.html`);
+      windowMap.once("ready-to-show", () => {
+        windowMap.show();
+        windowMap.send("mapProps", map);
+      });
+      isWindowMapOn = true;
+    } else {
+      windowMap.hide();
+      isWindowMapOn = false;
+    }
+  });
+  ipcMain.on('overlayMapUpdate', (event, data) => {
+    if (isWindowMapOn === true)
+      windowMap.send("mapProps", data);
+  });
+
+  ipcMain.on('logme', (event,data)=>{
+    console.log(data);
   });
 });
 

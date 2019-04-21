@@ -1177,6 +1177,10 @@ since IE8 won't execute CSS that contains a CSS3 selector.
     flex-grow:1;
 }
 
+.pure-form-aligned .pure-control-group-fill textarea{
+    flex-grow:1;
+}
+
 .pure-form-aligned .pure-controls {
     margin: 1.5em 0 0 11em;
 }
@@ -1691,7 +1695,11 @@ striping:
 }
 
 .wrapper {
-    height: 1000px;
+    height: 800px;
+}
+
+.bold {
+    font-weight: bold;
 }
 
 /* Timer Styling */
@@ -1736,6 +1744,14 @@ striping:
     margin-right: 5px;
 }
 
+.ddb {
+    color: #636363;
+}
+
+.drare {
+    color: #555555;
+}
+
 /* Transparency click through */
 
 .click-on {
@@ -1743,4 +1759,8 @@ striping:
 }
 .click-through{
     pointer-events: none
+}
+
+#drag-handle{
+    -webkit-app-region: drag;
 }

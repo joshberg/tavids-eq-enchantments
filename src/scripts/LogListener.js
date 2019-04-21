@@ -1,5 +1,6 @@
 import Tail from 'always-tail';
 import fs from 'fs';
+import escapeStringRegexp from 'escape-string-regexp';
 
 var tail;
 var isListenerRunning = false;
@@ -11,6 +12,7 @@ var lastLoc = {
 var dpsBuffer = [];
 var peakDPS = 0;
 var currentZone = '';
+var mobInfoTarget = undefined;
 
 var dpsRegex = /You{1}\s(slash|bash|punch|kick|crush|pierce|strike)/g;
 var timeStampRegex = /\[{1}.*\]{1}/g;
@@ -18,7 +20,11 @@ var locRegex = /Your Location is\s/g;
 var loadingRegex = /You\shave\sentered\s/g
 
 
-var StartLogListener = (logFile, playerName) => {
+var StartLogListener = (logFile, listenerOptions) => {
+    let playerName = listenerOptions.playerName;
+    let mobInfoLookupCommand = listenerOptions.mobInfoLookupCommand;
+    mobInfoLookupCommand = mobInfoLookupCommand.split('%t');
+    let mobInfoRegEx = new RegExp(escapeStringRegexp(mobInfoLookupCommand[0]) + '.*' + escapeStringRegexp(mobInfoLookupCommand[1]));
     console.log("Starting Log Listener: " + logFile);
     if (!fs.existsSync(logFile)) fs.writeFileSync(logFile, "");
     tail = new Tail(logFile, '\n', {interval:500});
@@ -48,6 +54,9 @@ var StartLogListener = (logFile, playerName) => {
         if (data.match(loadingRegex)){
             let zoneText = data.split(loadingRegex)[1].trim();
             currentZone = zoneText.replace('.','');
+        }
+        if (data.match(mobInfoRegEx)){
+            mobInfoTarget = data.replace(mobInfoLookupCommand[0],'').replace(mobInfoLookupCommand[1],'').split(timeStampRegex)[1].trim();
         }
     });
     tail.on('error', function (data) {
@@ -119,6 +128,10 @@ var getCurrentZone = () => {
     return currentZone;
 };
 
+var getMobInfoTarget = () => {
+    return mobInfoTarget;
+};
+
 module.exports = {
     StartLogListener,
     StopLogListener,
@@ -127,5 +140,6 @@ module.exports = {
     getDpsBuffer,
     getLastLoc,
     getPlayerDps,
-    getCurrentZone
+    getCurrentZone,
+    getMobInfoTarget
 }

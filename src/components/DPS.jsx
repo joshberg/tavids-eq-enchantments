@@ -1,6 +1,8 @@
 import React from 'react';
-import { PassThrough } from 'stream';
+const TransparencyMouseFix = require('electron-transparency-mouse-fix');
 const ipcRenderer = require('electron').ipcRenderer;
+let remote = require('electron').remote;
+
 
 export default class DPS extends React.Component {
     constructor(props) {
@@ -11,7 +13,8 @@ export default class DPS extends React.Component {
             Peak: 0,
             TextSize: 12,
             BGColor: "#FFFFFF",
-            Opacity: 80
+            Opacity: 80,
+            TextColor: '#000000'
         };
 
         ipcRenderer.on('dpsProps', (event, data) => {
@@ -19,15 +22,23 @@ export default class DPS extends React.Component {
         });
     }
 
+    componentDidMount(){
+        const fix = new TransparencyMouseFix({
+            log: true,
+            fixPointerEvents: 'auto'
+        })
+    };
+
     render() {
         return (
-            <div className={"click-through"}>
+            <div>
                 <div style={{
                     fontSize: (this.state.TextSize) + "pt",
                     backgroundColor: (this.state.BGShow ? this.state.BGColor : "#0000"),
-                    opacity: (this.state.Opacity / 100)
-                }}><span className={"click-on"} style={{ position: "absolute", fontSize: 0.65 + "em", top: -1 + "px", left: 0 + "px" }}>&#8865;</span>
-                    <div className={"click-through"} style={{ padding: 0.6 + "em" }}>
+                    opacity: (this.state.Opacity / 100),
+                    color: (this.state.TextColor)
+                }}><span name={"drag-handle"} id="drag-handle" className={"click-on"} style={{ position: "absolute", fontSize: 0.65 + "em", top: -1 + "px", left: 0 + "px" }}>&#8865;</span>
+                    <div className="click-through" style={{ padding: 0.6 + "em" }}>
                         DPS: <span style={{ float: "right" }}>{this.state.Current}</span><br />
                         Avg: <span style={{ float: "right" }}>{this.state.Average}</span><br />
                         Peak:<span style={{ float: "right" }}>{this.state.Peak}</span></div>
