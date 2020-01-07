@@ -145,7 +145,7 @@ app.on('ready', function () {
       windowMap.loadURL(`file://${__dirname}/views/map.html`);
       windowMap.once("ready-to-show", () => {
         windowMap.show();
-        windowMap.send("mapProps", map);
+        windowMap.send("mapState", map);
       });
       isWindowMapOn = true;
     } else {

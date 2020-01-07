@@ -1,7 +1,11 @@
 import React from 'react';
+import ToggleButton from 'react-toggle-button';
 const TransparencyMouseFix = require('electron-transparency-mouse-fix');
 const ipcRenderer = require('electron').ipcRenderer;
+const Web = require('../scripts/Web');
+const fs = require('fs');
 let remote = require('electron').remote;
+
 
 
 export default class Map extends React.Component {
@@ -12,17 +16,34 @@ export default class Map extends React.Component {
                 x: 0,
                 y: 0
             },
-            locInterval: {},
-            currentZone: '',
+            currentZone: 'eastcommons',
             mapZoom: 100,
             mapScrollPositionX: 0,
             mapScrollPositionY: 0,
             toggleMapPing: false,
             mapScaleInstructions: 0,
+            BGColor: '#FFF',
+            BGShow: true,
+            Opacity: 255,
+            TextSize: 12,
+            TextColor: '#000',
         };
 
-        ipcRenderer.on('mapsProps', (event, data) => {
-            this.setState(data);
+        ipcRenderer.on('mapProps', (event, data) => {
+            let zone = this.state.currentZone;
+            this.setState(data, ()=>{
+                if(zone !== data.currentZone){
+                    //The player has entered a new zone. Check if the map exists (it should load automatically)
+                    if(!fs.existsSync('../../img/maps/Map_' + data.currentZone + '.jpg')){
+                        //If map does not exist, load from the web.
+                        Web.GetMapImage(data.currentZone).then((result)=>{
+                            this.setState({currentZone: data.currentZone});
+                        }).catch((err)=>{
+                            console.log(err);
+                        });
+                    }
+                }
+            });
         });
     }
 
@@ -46,7 +67,7 @@ export default class Map extends React.Component {
                         <div className="pure-grid" style={{ backgroundColor: "#AFDEFF" }}>
                             <div className="pure-u-1-3 bold">
                                 <div name="currentZone" id="currentZone" className="" style={{ lineHeight: "2em" }}>
-                                    East Commonlands
+                                    {this.state.currentZone}
                                 </div>
                             </div>
                             <div className="pure-u-2-3 bold click-on" style={{ textAlign: "right", lineHeight: "1.9em" }}>
@@ -103,7 +124,7 @@ export default class Map extends React.Component {
                             </div>
                         </div>
                         <figure name="mapContainer" id="mapContainer" style={{ overflow: "scroll", maxHeight: this.state.configMapHeight - 60 + "px", marginLeft: "0px", width: "100%" }}>
-                            <img style={{ height: this.state.mapZoom + "%", width: this.state.mapZoom + "%", overflow: "hidden" }} src="../img/maps/Map_eastcommons.jpg" />
+                            <img style={{ height: this.state.mapZoom + "%", width: this.state.mapZoom + "%", overflow: "hidden" }} src={`../../img/maps/Map_${this.state.currentZone}.jpg`} />
                         </figure>
                     </div>
                 </div>

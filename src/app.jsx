@@ -162,6 +162,26 @@ export default class App extends React.Component {
       this.setState({
         lastLoc: Log.getLastLoc(),
         currentZone: Log.getCurrentZone()
+      }, () => {
+        let configMap = {
+          Width: parseInt(this.state.configMapWidth),
+          Height: parseInt(this.state.configMapHeight),
+          X: parseInt(this.state.configMapX),
+          Y: parseInt(this.state.configMapY),
+          BGColor: this.state.configMapBG,
+          BGShow: this.state.configMapBGshow,
+          Opacity: parseInt(this.state.configMapOpacity),
+          TextSize: parseInt(this.state.configMapTextColor),
+          TextColor: parseInt(this.state.configMapTextColor),
+          lastLoc: this.state.lastLoc,
+          currentZone: this.state.currentZone,
+          mapZoom: 100,
+          mapScrollPositionX: 0,
+          mapScrollPositionY: 0,
+          toggleMapPing: false,
+          mapScaleInstructions: 0
+        };
+        ipcRenderer.send('overlayMapUpdate', configMap);
       });
     }, 1000);
 
@@ -328,11 +348,33 @@ export default class App extends React.Component {
                   name="overlayMapToggle"
                   value={this.state.overlayMapActive || false}
                   onToggle={(value) => {
-                    if (this.CheckBasicConfig())
+                    if (this.CheckBasicConfig()) {
                       this.setState({
                         overlayMapActive: !value,
-                      })
-                    else
+                      });
+                      let configMap = {
+                        Width: parseInt(this.state.configMapWidth),
+                        Height: parseInt(this.state.configMapHeight),
+                        X: parseInt(this.state.configMapX),
+                        Y: parseInt(this.state.configMapY),
+                        BGColor: this.state.configMapBG,
+                        BGShow: this.state.configMapBGshow,
+                        Opacity: parseInt(this.state.configMapOpacity),
+                        TextSize: parseInt(this.state.configMapTextColor),
+                        TextColor: parseInt(this.state.configMapTextColor),
+                        lastLoc: {
+                          x: 0,
+                          y: 0
+                        },
+                        currentZone: 'eastcommons',
+                        mapZoom: 100,
+                        mapScrollPositionX: 0,
+                        mapScrollPositionY: 0,
+                        toggleMapPing: false,
+                        mapScaleInstructions: 0
+                      };
+                      ipcRenderer.send('overlayMapToggle', configMap);
+                    } else
                       alert('Cannot activate overlay. Basic config incomplete!');
                   }} />
               </div>
@@ -665,7 +707,7 @@ export default class App extends React.Component {
                           </div>
                         </div>
                         <div className="pure-u-2-3 bold" style={{ textAlign: "right", lineHeight: "1.9em" }}>
-                          <div style={{display:"inline-flex"}}>
+                          <div style={{ display: "inline-flex" }}>
                             <ToggleButton
                               name="toggleMapPing"
                               value={this.state.toggleMapPing || false}
@@ -705,7 +747,7 @@ export default class App extends React.Component {
                                 document.getElementById('mapSetScale').innerText = "Scale";
                                 document.getElementById('mapContainer').style.cursor = "default";
                                 this.setState({ mapScaleInstructions: 0 });
-                              }                            
+                              }
 
                               //capture mouse click
 

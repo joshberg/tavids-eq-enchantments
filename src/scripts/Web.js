@@ -1,5 +1,7 @@
 const Crawler = require('crawler');
 const DB = require('./DB');
+const request = require('request');
+const fs = require('fs');
 const p99root = "https://wiki.project1999.com/";
 const mobInfoItems = ['AC',
     'agro_radius', 'attack_speed', 'attacks_per_round', 'class', 'damage_per_hit',
@@ -8,6 +10,42 @@ const mobInfoItems = ['AC',
 ];
 
 const ipcRenderer = require('electron').ipcRenderer;
+
+var GetMapImage = (currentZone) => {
+    ipcRenderer.send('logme', 'CurrentZone: ' + currentZone);
+    let lookup = currentZone.split(' ').join('_');
+    return new Promise((resolve, reject) => {
+        //First get the image url by looking up the zone using the crawler
+        var c = new Crawler({
+            maxConnections: 1,
+            rateLimit: 1000,
+            callback: function (err, res, done) {
+                if (err) {
+                    ipcRenderer.send('logme', err);
+                    reject(err);
+                } else {
+                    var $ = res.$; //jquery insertion.
+                    let source = $('#wpTextbox1').text();
+                    let target = source.split('== Map ==')[1].split('[[Image:')[1].split('.jpg')[0];
+                    let writeStream = fs.createWriteStream('..\\..\\img\\maps\\' + currentZone + '.jpg');
+                    writeStream.on('open', (fd)=>{
+                        request.get(p99root + 'images/' + target + '.jpg')
+                        .on('error', (error) => {
+                            ipcRenderer.send('logme', 'GetMapImageError: ' + error);
+                            reject(error);
+                        })
+                        .on('close', () => {
+                            resolve(true);
+                        }).pipe(writeStream);
+                    });                   
+                }
+            }
+        })
+        c.queue({
+            url: p99root + "index.php?title=" + lookup + "&action=edit"
+        })
+    });
+};
 
 var GetMobInfo = (target) => {
     ipcRenderer.send('logme', 'SearchTarget: ' + target);
@@ -59,12 +97,12 @@ var GetMobInfo = (target) => {
                         }
                         //Insert mob into the database:
                         let keys = Object.keys(mob);
-                        for(let i = 0; i < keys.length; i++){
-                            if(mob[keys[i]].match(/[']/g)){
-                                mob[keys[i]] = mob[keys[i]].replace(/[']/g,`''`);
+                        for (let i = 0; i < keys.length; i++) {
+                            if (mob[keys[i]].match(/[']/g)) {
+                                mob[keys[i]] = mob[keys[i]].replace(/[']/g, `''`);
                             }
-                            if(mob[keys[i]].match(/[{{:}}]/g)){
-                                mob[keys[i]] = mob[keys[i]].replace(/[{{:}}\[\]]/g,'');
+                            if (mob[keys[i]].match(/[{{:}}]/g)) {
+                                mob[keys[i]] = mob[keys[i]].replace(/[{{:}}\[\]]/g, '');
                             }
                         }
                         let insert =
@@ -91,5 +129,6 @@ var GetMobInfo = (target) => {
 }
 
 module.exports = {
-    GetMobInfo
+    GetMobInfo,
+    GetMapImage
 }
